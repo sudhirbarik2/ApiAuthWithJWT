@@ -2,6 +2,7 @@ const router = require('express').Router();
 const User = require('../model/Users');
 const Joi = require('@hapi/joi')
 const bcrypt= require('bcryptjs')
+const jwt=require('jsonwebtoken')
 const { registerValidation, loginValidation } = require('../Validation')
 //Validation
 
@@ -36,9 +37,9 @@ router.post('/login',async(req,res)=>{
         const user=await User.findOne({email:req.body.email});
         if(!user) return res.status(400).send("Email Id not registered ! Please register first !!");
         const validPassword= await bcrypt.compare(req.body.password,user.password)
-        if(validPassword) return res.status(200).send("Logged in Successfully !");
-        res.status(400).send("Wrong Password")
-        
+        if(!validPassword) return res.status(200).send("Wrong Password !");
+        const token=jwt.sign({id:user._id},process.env.TOKEN_SECRET);
+        res.header('auth-token',token).send({token:token});       
     }
 });
 
